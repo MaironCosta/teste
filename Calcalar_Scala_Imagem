@@ -1,0 +1,20 @@
+
+	
+	private static float calcularEscalaImagem(Image img, float scalaImgPadrao, float larguraMaximaPdfTemplate, float alturaMaximaPdfTemplate, boolean isLargura){
+		
+		for (int i = 0; i < 99; i++) {        	  
+
+			img.scalePercent(i);
+
+			System.out.println("numero i "+ i +" valor height "+ img.getScaledHeight() + " converteMilimetroParaPontos " + converteMilimetroParaPontos(alturaMaximaPdfTemplate) + "    imgAssinatura.getHeight " + img.getHeight());	        	  
+
+			if(img.getScaledHeight() >= converteMilimetroParaPontos(alturaMaximaPdfTemplate)){
+				scalaImgPadrao = i;
+				System.out.println("imgAssinatura.getHeight(): " + img.getHeight());
+				break;
+			}
+
+		}
+		
+		return scalaImgPadrao;
+	}
