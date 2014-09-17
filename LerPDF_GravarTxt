@@ -1,0 +1,72 @@
+
+	public static void lerPDF_GravarTxt () {
+
+		String enderecoLink = "URL";
+		String pathLocal = "C:\\Users\\FattoriaAsus\\Downloads\\certidao.pdf";
+		
+		try {
+			
+			com.itextpdf.text.pdf.PdfReader pdfReader = new com.itextpdf.text.pdf.PdfReader(pathLocal);			
+			
+			int n = 1;
+			
+	//		String str = PdfTextExtractor.getTextFromPage(pdfReader, 1);
+	//		System.out.println("Conteudo: "+str);
+			
+			StringBuffer sb = new StringBuffer();
+			
+			// pdfReader.getNumberOfPages() -> quantidade de páginas do PDF
+			while (n <= pdfReader.getNumberOfPages()) {
+
+				System.out.println("pag: " + n);			
+
+				// pega uma página do PDF
+				String pagina = PdfTextExtractor.getTextFromPage(pdfReader, n);
+								
+				System.out.println(pagina);
+				// separa linha por linha
+				String linha[] = pagina.split("\n");
+				
+				for (String l : linha) {
+					
+					sb.append(l + "\r\n"); // PARA QUEBRAR LINHA NO WINDOWS
+					
+				}
+								
+				n++;
+				
+			}
+			
+			String pathFile = "C:\\Users\\FattoriaAsus\\Documents\\CRA_RJ\\testes\\arquivoLeitura.txt";
+			//escrevo no novo arquivo
+			FileWriter gravar = new FileWriter(pathFile, false);
+			
+	//		System.out.println(sb);			
+			
+			// criar o arquivo
+			gravar.write(sb.toString() + "\r\n");  // PARA QUEBRAR LINHA NO WINDOWS
+			gravar.close();
+			
+			File file = new File(pathFile);
+			
+			BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+						
+			String s = bufferedReader.readLine();
+			
+			while (s != null) {
+				
+		//		System.out.println(s);
+				
+				s = bufferedReader.readLine();
+				
+			}
+			
+			bufferedReader.close();
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
