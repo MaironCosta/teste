@@ -1,0 +1,280 @@
+public class PdfToImagem {
+
+	// site to reference: http://rajeevalochanabr.wordpress.com/2012/01/05/pdf-file-to-image-png-conversion-using-java/
+	
+	private final String extImage = "png";
+	
+	private byte [] byteArrayPDF;
+	private File filePDF;
+	private String pathToSaveImage;
+	private PDFFile pdffile;
+	private RandomAccessFileOrArray randomAccessFileOrArray;
+	private RandomAccessFile randomAccessFile;
+	
+	public PdfToImagem(byte [] byteArrayPDF) throws IllegalArgumentException, IOException {
+		// TODO Auto-generated constructor stub
+		
+		this.byteArrayPDF = byteArrayPDF;	
+		this.doConfByteArray();
+		
+	}
+
+	public PdfToImagem(File filePDF, String pathToSaveImage) throws IllegalArgumentException, IOException {
+		// TODO Auto-generated constructor stub
+		
+		this.filePDF = filePDF;		
+		this.pathToSaveImage = pathToSaveImage;
+		this.doConfFile();
+		
+	}
+	
+	private void doConfByteArray () throws IllegalArgumentException, IOException {
+		
+		if (byteArrayPDF == null) {
+			
+			throw new IllegalArgumentException("Argument byteArrayPDF is null");
+			
+		}
+		
+		String descobrirExtensao = new String(byteArrayPDF);
+		if (!descobrirExtensao.contains("%PDF")) {
+			
+			throw new IllegalArgumentException("Argument byteArrayPDF isn't a .PDF file");
+			
+		}
+		
+		randomAccessFileOrArray = new RandomAccessFileOrArray(byteArrayPDF);
+		pdffile = new PDFFile(randomAccessFileOrArray.getNioByteBuffer());
+		
+	}
+	
+	private void doConfFile () throws IllegalArgumentException, IOException {
+		
+		if (filePDF == null) {
+			
+			throw new IllegalArgumentException("Argument filePDF is null");
+			
+		}
+
+		if (pathToSaveImage == null) {
+			
+			throw new IllegalArgumentException("Argument pathToSaveImage is null");
+			
+		}
+				
+		randomAccessFile = new RandomAccessFile(filePDF, "r");
+		FileChannel channel = randomAccessFile.getChannel();
+		ByteBuffer buf = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+		pdffile = new PDFFile(buf);
+		
+	}
+	
+	public ByteArrayOutputStream byteArraytoImage (PDFPage page) throws IllegalArgumentException, IOException {
+		
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		
+		BufferedImage bImg = this.doImage(page);
+		ImageIO.write(bImg, extImage, baos);
+
+		baos.flush();
+		baos.close();
+
+		randomAccessFileOrArray.close();
+
+		return baos;
+
+	}
+	
+	public void fileToImage (PDFPage page) throws IllegalArgumentException, IOException {
+				
+		BufferedImage bImg = this.doImage(page);
+		File yourImageFile = new File(pathToSaveImage +  "." + extImage);
+	        
+		ImageIO.write(bImg, extImage, yourImageFile);
+
+		randomAccessFile.close();
+
+	}
+
+	private BufferedImage doImage(PDFPage page) throws IllegalArgumentException, IOException  {
+		
+		if (page == null) {
+			
+			throw new IllegalArgumentException("Argument page is null");
+			
+		}
+		
+		// draw the first page to an image
+		//	PDFPage page = pdffile.getPage(i);
+
+		//get the width and height for the doc at the default zoom
+		Rectangle rect = new Rectangle(0,0,
+				                       (int)page.getBBox().getWidth(),
+				                       (int)page.getBBox().getHeight());
+
+		//generate the image
+		Image img = page.getImage(rect.width, rect.height, //width & height
+				                  rect, // clip rect
+				                  null, // null for the ImageObserver
+				                  true, // fill background with white
+				                  true  // block until drawing is done
+				                 );
+
+		//save it as a file
+		BufferedImage bImg = this.toBufferedImage(img);
+		
+		return bImg;
+		
+	}	
+
+	// This method returns a buffered image with the contents of an image
+	private BufferedImage toBufferedImage(Image image) {
+
+		if (image instanceof BufferedImage) {
+			return (BufferedImage)image;
+		}
+
+		// This code ensures that all the pixels in the image are loaded
+		image = new ImageIcon(image).getImage();
+
+		// Create a buffered image with a format that's compatible with the screen
+		BufferedImage bimage = null;
+		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		
+		try {
+			
+			// Determine the type of transparency of the new buffered image
+		    int transparency = Transparency.OPAQUE;
+
+			// Create the buffered image
+			GraphicsDevice gs = ge.getDefaultScreenDevice();
+			GraphicsConfiguration gc = gs.getDefaultConfiguration();
+			bimage = gc.createCompatibleImage(image.getWidth(null), image.getHeight(null), transparency);
+			
+		} catch (HeadlessException e) {
+			System.out.println("The system does not have a screen");
+		}
+
+		if (bimage == null) {
+			int type = BufferedImage.TYPE_INT_RGB;
+			bimage = new BufferedImage(image.getWidth(null), image.getHeight(null), type);
+		}
+
+		// Copy image to buffered image
+		Graphics g = bimage.createGraphics();
+
+		// Paint the image onto the buffered image
+		g.drawImage(image, 0, 0, null);
+		g.dispose();
+
+		return bimage;
+	}
+		
+	public PDFFile getPDFFile (){
+		return pdffile;
+	}
+	
+//	----------------------------------------------------------------------------------------------
+	
+	// exemplos
+	// site to reference: http://rajeevalochanabr.wordpress.com/2012/01/05/pdf-file-to-image-png-conversion-using-java/
+	// na classe CertidaoEmpresaFacadeBean tem exemplo no m�todo "certidaoAcervoTecnicoEmpresa"
+	
+	@SuppressWarnings({"unused"})
+	private void anexarArquivosPDF_EXEMPLE01 (PdfWriter writer) throws IOException, BadElementException,
+			                                                                                     MalformedURLException, DocumentException, 
+			                                                                                     IllegalArgumentException {
+
+		File file = new File("C:\\Users\\FattoriaAsus\\Documents\\CRA_RJ\\testes\\arquivo01.pdf");
+		
+		RandomAccessFile raf = new RandomAccessFile(file, "r");
+		FileChannel channel = raf.getChannel();
+		ByteBuffer buf = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+		PDFFile pdffile = new PDFFile(buf);
+		
+		int i = 0;				
+		int totalPages = pdffile.getNumPages();			
+		
+		while (i < totalPages) {
+			
+			i++;
+			
+			 // draw the first page to an image
+			PDFPage page = pdffile.getPage(i);
+			
+			//get the width and height for the doc at the default zoom
+	        java.awt.Rectangle rect = new java.awt.Rectangle(0,0,
+	                                      (int)page.getBBox().getWidth(),
+	                                      (int)page.getBBox().getHeight());
+	        
+	      //generate the image
+	        Image img = page.getImage(rect.width, rect.height, //width & height
+	                                           rect, // clip rect
+	                                           null, // null for the ImageObserver
+	                                           true, // fill background with white
+	                                           true  // block until drawing is done
+	                                          );
+	        
+	      //save it as a file
+	        BufferedImage bImg = toBufferedImage(img);
+	        File yourImageFile = new File("E:/workspace/rnd/javarnd/page_" + i + ".png");
+	        ImageIO.write( bImg,"png",yourImageFile);
+	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	        ImageIO.write(bImg, "png", baos );
+	        
+	        baos.flush();
+	    	byte[] imageInByte = baos.toByteArray();
+	    	baos.close();
+	    		        
+		}		
+		
+		raf.close();
+
+	}	
+	
+	
+	@SuppressWarnings({"unused"})
+	   // This method returns a buffered image with the contents of an image
+    private static BufferedImage toBufferedImage_EXEMPLE01(Image image) {
+    	
+        if (image instanceof BufferedImage) {
+            return (BufferedImage)image;
+        }
+ 
+        // This code ensures that all the pixels in the image are loaded
+        image = new ImageIcon(image).getImage();
+ 
+        // Create a buffered image with a format that's compatible with the screen
+        BufferedImage bimage = null;
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        try {
+            // Determine the type of transparency of the new buffered image
+         //   int transparency = Transparency.OPAQUE;
+        	int transparency = Transparency.TRANSLUCENT;
+ 
+            // Create the buffered image
+            GraphicsDevice gs = ge.getDefaultScreenDevice();
+            GraphicsConfiguration gc = gs.getDefaultConfiguration();
+            bimage = gc.createCompatibleImage(
+                image.getWidth(null), image.getHeight(null), transparency);
+        } catch (HeadlessException e) {
+            System.out.println("The system does not have a screen");
+        }
+ 
+        if (bimage == null) {
+            int type = BufferedImage.TYPE_INT_RGB;
+            bimage = new BufferedImage(image.getWidth(null), image.getHeight(null), type);
+        }
+ 
+        // Copy image to buffered image
+        Graphics g = bimage.createGraphics();
+ 
+        // Paint the image onto the buffered image
+        g.drawImage(image, 0, 0, null);
+        g.dispose();
+ 
+        return bimage;
+    }
+
+	
+}
