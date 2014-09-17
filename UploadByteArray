@@ -1,0 +1,121 @@
+public void uploadByteArray(HttpServletRequest request, HttpServletResponse response) {
+
+		//	http://www.devmanuals.com/tutorials/java/servlet/file-upload.html
+
+			//http://blog.teamtreehouse.com/uploading-files-ajaxvar file;
+			//	http://www.programming-free.com/2013/06/ajax-file-upload-java-iframe.html	
+	//	https://github.com/jfeldstein/jQuery.AjaxFileUpload.js/blob/master/jquery.ajaxfileupload.js#L56
+		
+		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+
+		if (isMultipart) {
+
+			// Create a factory for disk-based file items
+			FileItemFactory factory = new DiskFileItemFactory();
+			
+			// Create a new file upload handler
+			ServletFileUpload upload = new ServletFileUpload(factory);	
+			ByteArrayOutputStream byteArrayOutputStream = null;
+			byte byteIn[] = null;
+						
+			try {
+
+				DataInputStream dataInputStream = new DataInputStream(request.getInputStream());				
+				
+				byteIn = IOUtils.toByteArray(dataInputStream);
+				
+				byteArrayOutputStream = new ByteArrayOutputStream(); 
+				byteArrayOutputStream.write(byteIn);
+				
+				// Parse the request
+
+				List /* FileItem */ items = upload.parseRequest(request);
+				Iterator iterator = items.iterator();
+
+				while (iterator.hasNext()) {
+
+					FileItem item = (FileItem) iterator.next();
+					
+					if (!item.isFormField()) {
+
+						String fileName = item.getName(); 
+					//	String root = getServletContext().getRealPath("/");
+						String root = "c://";
+						File path = new File(root + "/uploads");
+
+						if (!path.exists()) {
+
+							boolean status = path.mkdirs();
+
+						}
+
+						File uploadedFile = new File(path + "/" + fileName);
+						System.out.println(uploadedFile.getAbsolutePath());
+						item.write(uploadedFile);						
+
+					}
+
+				}
+
+			} catch (FileUploadException e) {
+
+				e.printStackTrace();
+
+			} catch (Exception e) {
+
+				e.printStackTrace();
+
+			}
+			
+			String nomeArquivo = "teste";
+
+			if(byteIn != null){
+				
+				String descobrirExtensao = new String(byteIn);
+				
+				if(descobrirExtensao.contains("%PDF")){
+					
+					response.setContentType("application/pdf");
+					nomeArquivo+=".pdf";
+					
+				}else if(descobrirExtensao.contains("JFIF")){
+					
+					response.setContentType("image/jpg");
+					nomeArquivo+=".jpg";
+					
+				}else if(descobrirExtensao.contains("PNG")){
+					
+					response.setContentType("image/png");
+					nomeArquivo+=".png";
+					
+				}else{
+					response.setContentType("image/jpeg");
+					nomeArquivo+=".jpeg";
+				}
+			
+	//		response.setContentType("application/pdf");
+
+			response.setHeader ("Content-Disposition", "attachment; filename=\""+nomeArquivo+"\"");
+
+			response.setContentLength(byteArrayOutputStream.size());
+
+			ServletOutputStream sos;
+
+			try {
+				
+				sos = response.getOutputStream();
+				sos.write(byteArrayOutputStream.toByteArray());
+				sos.flush(); 
+				sos.close();
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+			}
+			
+		}
+
+	}
