@@ -1,0 +1,69 @@
+
+	public static void manipularZIP () {
+
+		String enderecoLink = "URL";
+		String pathLocal = "c:\\";
+		
+		try {
+			
+		//	http://www.guj.com.br/java/38093-artigo-zip-com-java-compressao-e-descompressao-de-dados
+			
+		//	http://www.guj.com.br/articles/181
+
+			//	URL url = new URL("https://www.facebook.com/");
+			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
+			URL url = new URL(enderecoLink);  
+			url.openConnection().setReadTimeout(0);
+
+			//Queremos o arquivo local com o mesmo nome descrito na URL  
+			//Lembrando que o URL.getPath() ira retornar a estrutura   
+			//completa de diretorios e voce deve tratar esta String  
+			//caso nao deseje preservar esta estrutura no seu disco local.  
+			String nomeArquivoLocal = url.getPath();  
+
+			//Cria streams de leitura (este metodo ja faz a conexao)...  
+			InputStream is = url.openStream();  
+			
+		//	String diretorio = pathLocal + nomeArquivoLocal;
+			String diretorio = pathLocal + "Users\\Public\\url.zip";
+
+			//... e de escrita.  
+			FileOutputStream fos = new FileOutputStream(diretorio.replace("/", "\\"));  
+
+			//Le e grava byte a byte. Voce pode (e deve) usar buffers para  
+			//melhor performance (BufferedReader).  
+			int umByte = 0;  
+			while ((umByte = is.read()) != -1){  
+				fos.write(umByte);  
+			}  
+
+			//Nao se esqueca de sempre fechar as streams apos seu uso!  
+			is.close();  
+			fos.close();  
+						
+			File arquivo = new File(pathLocal + "Users\\Public\\url.zip");
+			
+	//		ZipFile zipFile = new ZipFile(new File(pathLocal+nomeArquivoLocal));
+			ZipFile zipFile = new ZipFile(arquivo);
+			Enumeration e = zipFile.entries(); 
+			
+			System.out.println(System.getProperty("user.home"));
+
+			while( e.hasMoreElements() ) {  
+
+				ZipEntry entrada = (ZipEntry) e.nextElement();  
+				System.out.println( entrada.getName() );  
+				
+				is = zipFile.getInputStream(entrada);
+
+			}  
+
+			zipFile.close(); 
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
